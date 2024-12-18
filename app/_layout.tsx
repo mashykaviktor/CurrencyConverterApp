@@ -33,14 +33,22 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: "#212644" },
+          headerTintColor: "white",
+          headerBackButtonDisplayMode: "minimal",
+        }}
+      >
         <Stack.Screen
           name="index"
-          options={{ headerShown: true, title: "Select currency" }}
+          options={{
+            title: "Select currency",
+          }}
         />
         <Stack.Screen
-          name="card"
-          options={{ headerShown: true, title: "Top up your card" }}
+          name="converter"
+          options={{ title: "Top up your card" }}
         />
         <Stack.Screen name="+not-found" />
       </Stack>

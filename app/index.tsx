@@ -26,7 +26,6 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       const data = await fetchCurrency();
-      console.log("data => ", data);
       if (data) setCurrencies(data);
     })();
   }, []);
@@ -34,16 +33,25 @@ export default function Home() {
   const renderItem = ({ item }) => {
     return (
       <TouchableOpacity
-        style={styles.currencyButton}
-        onPress={() => navigation.navigate("card", { item })}
+        style={styles.currencyLink}
+        onPress={() => navigation.navigate("converter", { item })}
       >
         <View style={styles.currencyWrapper}>
-          <View style={{ flex: 1, flexDirection: "row", gap: 4 }}>
-            <Text>{item.flag || ""}</Text>
-            <Text>{item.code || ""}</Text>
-            <Text>{item.name || ""}</Text>
+          <View style={styles.currencyDetailsWrapper}>
+            <Text style={[styles.currencyDetailText, { fontSize: 32 }]}>
+              {item.flag || ""}
+            </Text>
+            <Text style={styles.currencyDetailText}>{item.code || ""}</Text>
+            <Text
+              style={[
+                styles.currencyDetailText,
+                { fontSize: 16, fontWeight: "300" },
+              ]}
+            >
+              {item.name || ""}
+            </Text>
           </View>
-          <MaterialIcons name="chevron-right" size={16} color="black" />
+          <MaterialIcons name="chevron-right" size={24} color="black" />
         </View>
       </TouchableOpacity>
     );
@@ -62,24 +70,32 @@ export default function Home() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <View style={styles.innerContainer}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <MaterialIcons
-              name="search"
-              size={24}
-              color="black"
-              style={{ position: "absolute", left: 5 }}
-            />
+          <View style={styles.searchWrapper}>
             <TextInput
               style={styles.textInput}
               onChangeText={onChangeText}
               value={text}
+              placeholder="Search currencies"
+              placeholderTextColor="#AAA"
+            />
+            <MaterialIcons
+              name="search"
+              size={24}
+              color="#999"
+              style={styles.searchIcon}
             />
           </View>
-          <Text style={{ fontWeight: 600 }}>All currencies</Text>
+          <Text style={styles.currencyDetailText}>All currencies</Text>
           <FlatList
             data={filteredCurrencies}
             renderItem={renderItem}
             keyExtractor={(item) => item.code}
+            ListEmptyComponent={
+              <Text style={styles.currencyText}>
+                No currencies found. Please, try again.
+              </Text>
+            }
+            initialNumToRender={20}
           />
         </View>
       </KeyboardAvoidingView>
@@ -90,32 +106,69 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F5F5F5",
   },
   innerContainer: {
     flex: 1,
-    padding: 10,
+    paddingHorizontal: 16,
+    paddingTop: 24,
     gap: 16,
   },
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "black",
-    borderRadius: 10,
+    borderColor: "#DADADA",
+    borderRadius: 25,
     height: 50,
-    padding: 10,
-    paddingLeft: 32,
+    paddingHorizontal: 40,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  currencyButton: {
-    flex: 1,
+  searchWrapper: {
+    position: "relative",
+    height: 50,
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 10,
+    top: 13,
+  },
+  currencyLink: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 1,
   },
   currencyWrapper: {
     flex: 1,
     flexDirection: "row",
-    borderWidth: 1,
-    borderColor: "gray",
+    alignItems: "center",
     justifyContent: "space-between",
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: "white",
+  },
+  currencyText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+  currencyDetailsWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  currencyDetailText: {
+    fontSize: 18,
+    color: "#333",
+    fontWeight: "600",
   },
 });
