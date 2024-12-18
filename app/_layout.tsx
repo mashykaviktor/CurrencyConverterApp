@@ -11,6 +11,13 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { CurrencyCardProps } from "./components/CurrencyCard";
+
+export interface RootStackParams {
+  index: undefined;
+  converter: { item: CurrencyCardProps };
+  "+not-found": undefined;
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -50,7 +57,7 @@ export default function RootLayout() {
           name="converter"
           options={{ title: "Top up your card" }}
         />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="+not-found" options={{ title: "Not Found" }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

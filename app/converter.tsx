@@ -1,15 +1,29 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   TouchableOpacity,
   Keyboard,
 } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, RouteProp } from "@react-navigation/native";
+import CurrencyCard from "./components/CurrencyCard";
+import { sanitizedCurrencyInput } from "./utils/sanitizedCurrencyInput";
+
+type ConverterRouteParams = {
+  item: {
+    flag: string;
+    code: string;
+    rate: number;
+  };
+};
+
+type ConverterScreenRouteProp = RouteProp<
+  { params: ConverterRouteParams },
+  "params"
+>;
 
 const uk = {
   name: "British Pound",
@@ -19,29 +33,32 @@ const uk = {
 };
 
 export default function Converter() {
-  const route = useRoute();
-  const [value, setValue] = useState(0);
+  const route = useRoute<ConverterScreenRouteProp>();
+  const [value, setValue] = useState("");
 
-  const { flag, code, rate } = route?.params?.item || {};
+  const { flag, code, rate } = route?.params?.item;
   const numericValue = parseFloat(value) || 0;
   const currencyExchange = (numericValue * rate).toFixed(2);
 
-  const onChangeText = (input) => {
-    // Remove non-numeric characters and ensure valid numeric input
-    const sanitizedInput = input.replace(/[^0-9.]/g, "");
-    // Restrict to two decimal places
-    const formattedInput = sanitizedInput.replace(
-      /^(\d+(\.\d{0,2})?).*$/,
-      "$1"
-    );
-    setValue(formattedInput);
-  };
+  const handleInputChange = useCallback((input: string) => {
+    setValue(sanitizedCurrencyInput(input));
+  }, []);
 
   if (!route) null;
 
   const handleContinue = () => {
     Keyboard.dismiss();
   };
+
+  if (!code || !flag || !rate) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>
+          Invalid currency data. Please try again.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -51,47 +68,21 @@ export default function Converter() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <View style={styles.innerContainer}>
-          <View style={styles.currencyWrapper}>
-            <View style={styles.currencyDetailsWrapper}>
-              <Text style={[styles.currencyDetailText, { fontSize: 32 }]}>
-                {uk.flag || ""}
-              </Text>
-              <Text style={styles.currencyDetailText}>{uk.code || ""}</Text>
-            </View>
-            <View
-              style={{
-                borderLeftWidth: 1,
-              }}
-            ></View>
-            <View style={styles.currencyValueWrapper}>
-              <Text style={styles.text}>You spend:</Text>
-              <TextInput
-                keyboardType="numeric"
-                style={styles.currencyDetailText}
-                onChangeText={onChangeText}
-                value={value}
-                placeholder="0.00"
-                autoFocus={true}
-              />
-            </View>
-          </View>
-          <View style={styles.currencyWrapper}>
-            <View style={styles.currencyDetailsWrapper}>
-              <Text style={[styles.currencyDetailText, { fontSize: 32 }]}>
-                {flag || ""}
-              </Text>
-              <Text style={styles.currencyDetailText}>{code || ""}</Text>
-            </View>
-            <View
-              style={{
-                borderLeftWidth: 1,
-              }}
-            ></View>
-            <View style={styles.currencyValueWrapper}>
-              <Text style={styles.text}>You get:</Text>
-              <Text style={styles.currencyDetailText}>{currencyExchange}</Text>
-            </View>
-          </View>
+          <CurrencyCard
+            flag={uk.flag}
+            code={uk.code}
+            label="You spend:"
+            value={value}
+            onChangeText={handleInputChange}
+            editable={true}
+          />
+          <CurrencyCard
+            flag={flag}
+            code={code}
+            label="You get:"
+            value={currencyExchange}
+            editable={false}
+          />
           <View style={styles.exchangeRateWrapper}>
             <Text style={styles.text}>Current exchange rate</Text>
             <Text style={styles.amountText}>
@@ -121,46 +112,6 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     gap: 16,
   },
-  currencyWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#9299A5",
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-    justifyContent: "space-around",
-  },
-  currencyDetailsWrapper: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 2,
-    width: "40%",
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRightWidth: 1,
-    borderColor: "#9299A5",
-    borderTopLeftRadius: 10,
-    borderBottomLeftRadius: 10,
-  },
-  currencyDetailText: {
-    borderWidth: 0,
-    fontSize: 18,
-    color: "#333",
-    fontWeight: "600",
-  },
-  currencyValueWrapper: {
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    width: "60%",
-  },
   continueButton: {
     backgroundColor: "#1172A5",
     borderRadius: 25,
@@ -186,5 +137,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#333",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    fontSize: 18,
+    color: "red",
+    fontWeight: "600",
   },
 });

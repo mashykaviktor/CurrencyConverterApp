@@ -1,64 +1,43 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   TextInput,
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import fetchCurrency from "./api/fetchCurrency";
+import CurrencyItem from "./components/CurrencyItem";
+import type { CurrencyItemProps } from "./components/CurrencyItem";
+import { CurrencyCardProps } from "./components/CurrencyCard";
 
 export default function Home() {
-  const navigation = useNavigation();
-
   const [text, setText] = useState("");
   const [currencies, setCurrencies] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const onChangeText = (input) => {
+  const handleSearch = useCallback((input: string) => {
     setText(input);
-  };
+  }, []);
 
   useEffect(() => {
     (async () => {
       const data = await fetchCurrency();
       if (data) setCurrencies(data);
+      setLoading(false);
     })();
   }, []);
 
-  const renderItem = ({ item }) => {
-    return (
-      <TouchableOpacity
-        style={styles.currencyLink}
-        onPress={() => navigation.navigate("converter", { item })}
-      >
-        <View style={styles.currencyWrapper}>
-          <View style={styles.currencyDetailsWrapper}>
-            <Text style={[styles.currencyDetailText, { fontSize: 32 }]}>
-              {item.flag || ""}
-            </Text>
-            <Text style={styles.currencyDetailText}>{item.code || ""}</Text>
-            <Text
-              style={[
-                styles.currencyDetailText,
-                { fontSize: 16, fontWeight: "300" },
-              ]}
-            >
-              {item.name || ""}
-            </Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={24} color="black" />
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderItem = ({ item }: CurrencyItemProps) => (
+    <CurrencyItem item={item} />
+  );
 
   const filteredCurrencies =
-    currencies.filter((el) =>
+    currencies.filter((el: CurrencyCardProps) =>
       el?.code?.toLowerCase().includes(text.toLowerCase())
     ) || [];
 
@@ -73,7 +52,7 @@ export default function Home() {
           <View style={styles.searchWrapper}>
             <TextInput
               style={styles.textInput}
-              onChangeText={onChangeText}
+              onChangeText={handleSearch}
               value={text}
               placeholder="Search currencies"
               placeholderTextColor="#AAA"
@@ -85,18 +64,22 @@ export default function Home() {
               style={styles.searchIcon}
             />
           </View>
-          <Text style={styles.currencyDetailText}>All currencies</Text>
-          <FlatList
-            data={filteredCurrencies}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.code}
-            ListEmptyComponent={
-              <Text style={styles.currencyText}>
-                No currencies found. Please, try again.
-              </Text>
-            }
-            initialNumToRender={20}
-          />
+          <Text style={styles.currencyListTitle}>All currencies</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="#2979F2" />
+          ) : (
+            <FlatList
+              data={filteredCurrencies}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.code}
+              ListEmptyComponent={
+                <Text style={styles.currencyText}>
+                  No currencies found. Please try again.
+                </Text>
+              }
+              initialNumToRender={20}
+            />
+          )}
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -137,36 +120,12 @@ const styles = StyleSheet.create({
     left: 10,
     top: 13,
   },
-  currencyLink: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    padding: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  currencyWrapper: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   currencyText: {
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
   },
-  currencyDetailsWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  currencyDetailText: {
+  currencyListTitle: {
     fontSize: 18,
     color: "#333",
     fontWeight: "600",
